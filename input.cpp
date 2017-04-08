@@ -20,7 +20,7 @@ int main()
         else
         {
             Node::standardize( node );
-            std::cout << node->toString() << std::endl;
+            std::cout << node->toString() << std::endl << std::endl;
         }
 
     }
