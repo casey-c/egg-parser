@@ -7,63 +7,6 @@
 #include "node.h"
 
 
-/*
- * Attempts to construct a tree from the given graph string.
- *
- * Params
- *      s: the string to parse ( e.g. 121AB )
- *
- * Returns
- *      Node*: a pointer to the root node of the tree if successful
- *      NULL: if input string is invalid
-*/
-Node* parseFromString( std::string s )
-{
-    // Initialize the stack
-    std::stack<Node*> stack;
-    Node* root = new Node();
-    stack.push(root);
-
-    // Loop through the string char by char
-    for ( unsigned int pos = 0; pos < s.length(); ++pos )
-    {
-        // Bad string
-        if ( stack.empty() )
-        {
-            std::cerr << "ERROR: too many nodes\n";
-            return NULL;
-        }
-
-        // Determine which node needs to be set
-        Node* curr = stack.top();
-        stack.pop();
-
-        // Check the current char at pos
-        if ( isdigit( s[pos] ) ) // Integers indicate cuts
-        {
-            curr->setCut();
-
-            // Push kids
-            for (int i = 0; i < s[pos] - '0'; ++i)
-                stack.push(curr->addChild());
-        }
-        else // Letters indicate statements
-            curr->setLetter(s[pos]);
-    }
-
-    // Bad string
-    if ( !stack.empty() )
-    {
-        std::cerr << "ERROR: not enough nodes\n";
-        return NULL;
-    }
-
-
-    // Make sure the root is actually a root node
-    root->setRoot();
-
-    return root;
-}
 
 
 int main()
@@ -73,7 +16,7 @@ int main()
     std::string s2 = "52AB1A32BA4ABCD1CA0";
 
     // First string
-    Node* root = parseFromString( s );
+    Node* root = Node::parseFromString( s );
     if ( root == NULL )
     {
         std::cerr << "Not a valid tree\n";
@@ -86,7 +29,7 @@ int main()
     std::cout << "Output: " << root->toString() << std::endl;
 
     // Second string
-    Node* root2 = parseFromString( s2 );
+    Node* root2 = Node::parseFromString( s2 );
     if ( root2 == NULL )
     {
         std::cerr << "Not a valid tree\n";
@@ -113,7 +56,7 @@ int main()
     // New tests
     std::cout << "\n----------\n";
     std::string s3 = "5A01A2AB31C2AB4ABCD";
-    Node* root3 = parseFromString( s3 );
+    Node* root3 = Node::parseFromString( s3 );
     std::cout << "Read in " << s3 << " and print: " << std::endl;
     root3->print();
     std::cout << "Result (notstandard): " << root3->toString() << std::endl;
@@ -144,7 +87,7 @@ int main()
     {
         std::string curr = (*it);
         std::cout << "In:  " << curr << std::endl;
-        Node* cr = parseFromString( curr );
+        Node* cr = Node::parseFromString( curr );
         Node::standardize( cr );
         std::cout << "Out: " << cr->toString() << std::endl << std::endl;
     }

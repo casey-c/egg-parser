@@ -37,6 +37,7 @@ public:
 
     // Sort children to follow a standard format
     static void standardize( Node* root );
+    static Node* parseFromString( std::string in );
     void sort();
 
 private:
