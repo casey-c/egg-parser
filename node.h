@@ -27,6 +27,7 @@ public:
     void setLetter(char c) { letter = c; isLetter = true; }
     void setCut() { isCut = true; }
     void setRoot() { isRoot = true; }
+    
 
     // Print
     void print();
@@ -39,7 +40,6 @@ public:
     void sort();
 
 private:
-
     Node* parent;
     std::list<Node*> children;
 

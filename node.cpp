@@ -52,8 +52,8 @@ std::string Node::toString()
     {
         result = result + children.size();
 
-        std::list<Node*>::iterator it = children.begin();
-        for ( ; it != children.end(); ++it )
+        std::list<Node*>::reverse_iterator it = children.rbegin();
+        for ( ; it != children.rend(); ++it )
             result += (*it)->toString();
     }
     else if ( isLetter )
