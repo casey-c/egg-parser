@@ -3,6 +3,9 @@
 #include <sstream>
 
 #include <stack>
+#include <vector>
+#include <utility>
+#include <algorithm>
 
 // Workaround for appending an unsigned int to a string
 std::string operator+(std::string const&a, unsigned int b)
@@ -62,58 +65,59 @@ std::string Node::toString()
     return result;
 }
 
+// Helper comparator function
+bool comparePairs( const std::pair< std::string, Node* >& first,
+                   const std::pair< std::string, Node* >& second )
+{
+    return first.first.compare( second.first ) > 0;
+    //return first.first < second.first;
+}
+
 // Sort the children into a standardized ordering
 void Node::sort()
 {
-    // Test if this actually needs to be sorted
+    // No need to sort unless at least 2 kids
     if ( children.size() > 1 )
     {
         // Perform the sort
-        std::list<std::string> letterList;
-        std::list<std::string> cutList;
+        std::vector< std::pair< std::string, Node* > > letterVec;
+        std::vector< std::pair< std::string, Node* > > cutVec;
 
         std::list<Node*>::iterator it = children.begin();
         for ( ; it != children.end(); ++it )
         {
-            if ( (*it)->cut() )
-                cutList.push_back( (*it)->toString() );
+            Node* curr = (*it);
+
+            std::pair< std::string, Node* > currPair;
+            currPair.first = curr->toString();
+            currPair.second = curr;
+
+            if ( curr->cut() )
+                cutVec.push_back( currPair );
             else
-                letterList.push_back( (*it)->toString() );
+                letterVec.push_back( currPair );
         }
 
-        std::list<std::string>::iterator its;
+        // Perform the sort by their string representation
+        std::sort( letterVec.begin(), letterVec.end(), comparePairs );
+        std::sort( cutVec.begin(), cutVec.end(), comparePairs );
 
-        letterList.sort();
-        cutList.sort();
+        // Combine the two lists with letters at the front
+        children.clear();
 
-        // Combine the two lists by putting letters at the front
-        std::list<std::string> combined = letterList;
-        for ( its = cutList.begin(); its != cutList.end(); ++its )
-            combined.push_back( *its );
-
-        // Make our children list reflect this new ordering
-        std::list<Node*> newOrdering;
-        for ( its = combined.begin(); its != combined.end(); ++its )
-        {
-            std::string target = (*its);
-
-            std::list<Node*>::iterator itn = children.begin();
-            for ( ; itn != children.end(); ++itn )
-            {
-                std::string potential = (*itn)->toString();
-                if ( target == potential )
-                    newOrdering.push_back( (*itn) );
-            }
-        }
-
-        children = newOrdering;
+        std::vector< std::pair< std::string, Node* > >::iterator itp;
+        for ( itp = letterVec.begin(); itp != letterVec.end(); ++itp )
+            children.push_back( (*itp).second );
+        for ( itp = cutVec.begin(); itp != cutVec.end(); ++itp )
+            children.push_back( (*itp).second );
     }
 }
 
-// Reorders the tree so that the entire graph is standardized
+// Standardize an entire graph, starting with root
 void Node::standardize(Node* root)
 {
-    // Find a proper ordering (using DFS)
+    // Parent's depend on their children, so we must use DFS to produce a valid
+    // ordering.
     std::stack<Node*> stack;
     std::list<Node*> ordering;
 
@@ -133,7 +137,8 @@ void Node::standardize(Node* root)
             stack.push( *it );
     }
 
-    // Sort based on that ordering
+    // Now that we have an ordering where all children come before their
+    // parents, we can call the sort routine.
     std::list<Node*>::iterator it = ordering.begin();
     for( ; it != ordering.end(); ++it )
         (*it)->sort();
