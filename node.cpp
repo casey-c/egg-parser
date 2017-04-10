@@ -51,18 +51,42 @@ std::string Node::toString()
 {
     std::string result = "";
 
-    if ( isCut || isRoot )
+    if ( isLetter )
+        result += letter;
+    else // Cut or root
     {
         result = result + children.size();
 
-        std::list<Node*>::reverse_iterator it = children.rbegin();
-        for ( ; it != children.rend(); ++it )
+        std::list<Node*>::iterator it = children.begin();
+        for (; it != children.end(); ++it)
             result += (*it)->toString();
+
     }
-    else if ( isLetter )
-        result += letter;
 
     return result;
+
+   // if ( isCut || isRoot )
+   // {
+   //     // Cuts are identified by their number of children
+   //     result += children.size();
+
+   //     std::list<Node*>::iterator it = children.begin();
+   //     for (; it != children.end(); ++it)
+   //         if ( (*it)->isLetter )
+   //             result += (*it)->toString();
+   //     for (; it != children.end(); ++it)
+   //         if ( (*it)->isCut )
+   //             result += (*it)->toString();
+
+
+   //    // std::list<Node*>::reverse_iterator it = children.rbegin();
+   //    // for ( ; it != children.rend(); ++it )
+   //    //     result += (*it)->toString();
+   // }
+   // else if ( isLetter )
+   //     result += letter;
+
+   // return result;
 }
 
 // Helper comparator function
@@ -70,7 +94,6 @@ bool comparePairs( const std::pair< std::string, Node* >& first,
                    const std::pair< std::string, Node* >& second )
 {
     return first.first.compare( second.first ) > 0;
-    //return first.first < second.first;
 }
 
 // Sort the children into a standardized ordering
@@ -79,6 +102,7 @@ void Node::sort()
     // No need to sort unless at least 2 kids
     if ( children.size() > 1 )
     {
+        std::cout << "This node has more than 1 kid\n";
         // Perform the sort
         std::vector< std::pair< std::string, Node* > > letterVec;
         std::vector< std::pair< std::string, Node* > > cutVec;
@@ -102,14 +126,31 @@ void Node::sort()
         std::sort( letterVec.begin(), letterVec.end(), comparePairs );
         std::sort( cutVec.begin(), cutVec.end(), comparePairs );
 
+        // DEBUG: verify sorting
+        std::cout << "verify sorting:\n";
+        std::vector< std::pair< std::string, Node* > >::iterator aa;
+        for (aa = letterVec.begin(); aa != letterVec.end(); ++aa)
+        {
+            std::cout << "* " << (*aa).first << std::endl;
+        }
+        for (aa = cutVec.begin(); aa != cutVec.end(); ++aa)
+        {
+            std::cout << "* " << (*aa).first << std::endl;
+        }
+        std::cout << std::endl;
+
         // Combine the two lists with letters at the front
         children.clear();
 
         std::vector< std::pair< std::string, Node* > >::iterator itp;
-        for ( itp = letterVec.begin(); itp != letterVec.end(); ++itp )
-            children.push_back( (*itp).second );
-        for ( itp = cutVec.begin(); itp != cutVec.end(); ++itp )
-            children.push_back( (*itp).second );
+        std::vector< std::pair< std::string, Node* > >::reverse_iterator ritp;
+
+        for ( ritp = cutVec.rbegin(); ritp != cutVec.rend(); ++ritp )
+            children.push_back( (*ritp).second );
+        for ( ritp = letterVec.rbegin(); ritp != letterVec.rend(); ++ritp )
+            children.push_back( (*ritp).second );
+
+        std::cout << "After combining: " << toString() << std::endl;
     }
 }
 
@@ -141,7 +182,11 @@ void Node::standardize(Node* root)
     // parents, we can call the sort routine.
     std::list<Node*>::iterator it = ordering.begin();
     for( ; it != ordering.end(); ++it )
+    {
+        std::cout << "Attempting to sort ordering node " << (*it)->toString()
+            << std::endl;
         (*it)->sort();
+    }
 }
 
 /*
