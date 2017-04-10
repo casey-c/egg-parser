@@ -8,7 +8,7 @@
 class Node
 {
 public:
-    // Constructor
+    /* Constructor */
     Node() : 
         parent(NULL),
         depth(0),
@@ -16,42 +16,43 @@ public:
         isCut(false),
         isRoot(false) {}
 
-    // Needed for standardization
-    const std::list<Node*> getChildren() const { return children; }
-    bool cut() { return isCut; }
-
-    // Add new child node
+    /* Add new nodes */
     Node* addChild();
 
-    // Set type
-    void setLetter(char c) { letter = c; isLetter = true; }
-    void setCut() { isCut = true; }
-    void setRoot() { isRoot = true; }
+    /* Set type */
+    void setAsLetter( char c );
+    void setAsCut();
+    void setAsRoot();
     
-
-    // Print
+    /* Printing functions */
     void print();
-
-    // Prints out the graph string using DFS
     std::string toString();
 
-    // Sort children to follow a standard format
-    static void standardize( Node* root );
+    /* Input from string */
     static Node* parseFromString( std::string in );
-    void sort();
+
+    /* Standardization */
+    static void standardize( Node* root );
+    void updateStdString();
+    void sortChildren();
+    //void sort();
+    //void updateStdString();
 
 private:
     Node* parent;
     std::list<Node*> children;
 
-    // ID's
+    /* Extra details */
     char letter;
     int depth;
 
-    // Bool
+    /* Bool */
     bool isLetter;
     bool isCut;
     bool isRoot;
+
+    /* Standardization */
+    std::string stdString;
 };
 
 #endif // NODE_H

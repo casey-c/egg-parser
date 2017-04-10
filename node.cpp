@@ -27,6 +27,37 @@ Node* Node::addChild()
     return c;
 }
 
+////////////////////////////
+/// Set this node's type ///
+////////////////////////////
+
+// Letter
+void Node::setAsLetter( char c )
+{
+    letter = c;
+    isLetter = true;
+    updateStdString();
+}
+
+// Cut
+void Node::setAsCut()
+{
+    isCut = true;
+    updateStdString();
+}
+
+// Root
+void Node::setAsRoot()
+{
+    isRoot = true;
+    updateStdString();
+}
+
+
+////////////////
+/// Printing ///
+////////////////
+
 // Print out the tree
 void Node::print()
 {
@@ -34,6 +65,7 @@ void Node::print()
     for (int i = 0; i < depth; ++i)
         std::cout << ".";
 
+    // Elements
     if (isRoot)
         std::cout << "ROOT" << std::endl;
     else if (isCut)
@@ -41,6 +73,7 @@ void Node::print()
     else if (isLetter)
         std::cout << letter << std::endl;
 
+    // Children
     std::list<Node*>::iterator it = children.begin();
     for ( ; it != children.end(); ++it )
         (*it)->print();
@@ -49,115 +82,117 @@ void Node::print()
 // Produce an output string
 std::string Node::toString()
 {
-    std::string result = "";
-
-    if ( isLetter )
-        result += letter;
-    else // Cut or root
-    {
-        result = result + children.size();
-
-        std::list<Node*>::iterator it = children.begin();
-        for (; it != children.end(); ++it)
-            result += (*it)->toString();
-
-    }
-
-    return result;
-
-   // if ( isCut || isRoot )
-   // {
-   //     // Cuts are identified by their number of children
-   //     result += children.size();
-
-   //     std::list<Node*>::iterator it = children.begin();
-   //     for (; it != children.end(); ++it)
-   //         if ( (*it)->isLetter )
-   //             result += (*it)->toString();
-   //     for (; it != children.end(); ++it)
-   //         if ( (*it)->isCut )
-   //             result += (*it)->toString();
-
-
-   //    // std::list<Node*>::reverse_iterator it = children.rbegin();
-   //    // for ( ; it != children.rend(); ++it )
-   //    //     result += (*it)->toString();
-   // }
-   // else if ( isLetter )
-   //     result += letter;
-
-   // return result;
+    updateStdString();
+    return stdString;
 }
+
+///////////////////////
+/// Standardization ///
+///////////////////////
+
 
 // Helper comparator function
 bool comparePairs( const std::pair< std::string, Node* >& first,
                    const std::pair< std::string, Node* >& second )
 {
-    return first.first.compare( second.first ) > 0;
+    //std::cout << "Comparing " << first.first << " with " << second.first
+        //<< std::endl;
+
+    std::string str1( first.first );
+    std::string str2( second.first );
+
+    std::reverse( str1.begin(), str1.end() );
+    std::reverse( str2.begin(), str2.end() );
+
+    // Sort by length too
+    int l1 = str1.length();
+    int l2 = str2.length();
+
+    if (l1 == l2)
+        return str1.compare( str2 ) < 0;
+    else
+        return l1 < l2;
 }
 
-// Sort the children into a standardized ordering
-void Node::sort()
+// Updates the standard string
+void Node::updateStdString()
 {
-    // No need to sort unless at least 2 kids
-    if ( children.size() > 1 )
+    std::string result = "";
+
+    if ( isLetter )
+        result.append(1, letter);
+    else
     {
-        std::cout << "This node has more than 1 kid\n";
-        // Perform the sort
-        std::vector< std::pair< std::string, Node* > > letterVec;
-        std::vector< std::pair< std::string, Node* > > cutVec;
+        result = result + children.size();
+        //std::list<Node*>::iterator it = children.begin();
 
-        std::list<Node*>::iterator it = children.begin();
-        for ( ; it != children.end(); ++it )
-        {
-            Node* curr = (*it);
+        //for ( ; it != children.end(); ++it)
+            //result += (*it)->stdString;
+        std::list<Node*>::reverse_iterator it = children.rbegin();
 
-            std::pair< std::string, Node* > currPair;
-            currPair.first = curr->toString();
-            currPair.second = curr;
+        for ( ; it != children.rend(); ++it)
+            result += (*it)->stdString;
+    }
 
-            if ( curr->cut() )
-                cutVec.push_back( currPair );
-            else
-                letterVec.push_back( currPair );
-        }
+    stdString = result;
 
-        // Perform the sort by their string representation
-        std::sort( letterVec.begin(), letterVec.end(), comparePairs );
-        std::sort( cutVec.begin(), cutVec.end(), comparePairs );
+    // Recurse up the tree
+    if ( parent != NULL )
+        parent->updateStdString();
+}
 
-        // DEBUG: verify sorting
-        std::cout << "verify sorting:\n";
-        std::vector< std::pair< std::string, Node* > >::iterator aa;
-        for (aa = letterVec.begin(); aa != letterVec.end(); ++aa)
-        {
-            std::cout << "* " << (*aa).first << std::endl;
-        }
-        for (aa = cutVec.begin(); aa != cutVec.end(); ++aa)
-        {
-            std::cout << "* " << (*aa).first << std::endl;
-        }
-        std::cout << std::endl;
+void Node::sortChildren()
+{
+    std::vector< std::pair< std::string, Node* > > letterVec;
+    std::vector< std::pair< std::string, Node* > > cutVec;
 
-        // Combine the two lists with letters at the front
-        children.clear();
+    std::list<Node*>::iterator itn = children.begin();
+    for ( ; itn!= children.end(); ++itn )
+    {
+        Node* child = (*itn);
 
-        std::vector< std::pair< std::string, Node* > >::iterator itp;
-        std::vector< std::pair< std::string, Node* > >::reverse_iterator ritp;
+        // This is only okay because of our ordering earlier
+        std::pair< std::string, Node* > pair;
+        pair.first = child->stdString;
+        pair.second = child;
 
-        for ( ritp = cutVec.rbegin(); ritp != cutVec.rend(); ++ritp )
-            children.push_back( (*ritp).second );
-        for ( ritp = letterVec.rbegin(); ritp != letterVec.rend(); ++ritp )
-            children.push_back( (*ritp).second );
+        // Fill the proper vector with the pair for this child
+        if (child->isLetter)
+            letterVec.push_back( pair );
+        else
+            cutVec.push_back( pair );
+    }
 
-        std::cout << "After combining: " << toString() << std::endl;
+    // Perform the sort here
+    std::sort( letterVec.begin(), letterVec.end(), comparePairs );
+    std::sort( cutVec.begin(), cutVec.end(), comparePairs );
+    //std::reverse( cutVec.begin(), cutVec.end() );
+
+    //std::cout << "We sorted the letters and cuts. They look like:\n";
+
+
+
+    // Update the children list to reflect the new order
+    children.clear();
+
+    std::vector< std::pair< std::string, Node*> >::iterator itp;
+    for ( itp = letterVec.begin(); itp != letterVec.end(); ++itp )
+    {
+        //std::cout << (*itp).first << std::endl;
+        children.push_back( (*itp).second );
+    }
+    for ( itp = cutVec.begin(); itp != cutVec.end(); ++itp )
+    {
+        //std::cout << (*itp).first << std::endl;
+        children.push_back( (*itp).second );
     }
 }
 
+// (Static)
 // Standardize an entire graph, starting with root
 void Node::standardize(Node* root)
 {
-    // Parent's depend on their children, so we must use DFS to produce a valid
+    // Parents depend on their children, so we must use DFS to produce a valid
     // ordering.
     std::stack<Node*> stack;
     std::list<Node*> ordering;
@@ -171,10 +206,9 @@ void Node::standardize(Node* root)
         ordering.push_front( curr );
         
         // Push the next nodes to the stack
-        std::list<Node*> c = curr->getChildren();
-        std::list<Node*>::iterator it = c.begin();
+        std::list<Node*>::iterator it = curr->children.begin();
 
-        for ( ; it != c.end(); ++it )
+        for ( ; it != curr->children.end(); ++it )
             stack.push( *it );
     }
 
@@ -183,10 +217,25 @@ void Node::standardize(Node* root)
     std::list<Node*>::iterator it = ordering.begin();
     for( ; it != ordering.end(); ++it )
     {
-        std::cout << "Attempting to sort ordering node " << (*it)->toString()
-            << std::endl;
-        (*it)->sort();
+        Node* curr = (*it);
+
+        if ( curr->isCut || curr->isRoot ) // Cuts & root
+        {
+            if ( curr->children.size() > 0 ) // At least one child
+            {
+                curr->sortChildren();
+                curr->updateStdString();
+            }
+
+        }
+
+        // DEBUG: Verify that we have made a proper string
+        //std::cout << "Made string: " << curr->stdString << std::endl;
+
     }
+
+    // DEBUG: notify finish
+    //std::cout << "Finished standardizing the entire graph\n";
 }
 
 /*
@@ -223,14 +272,14 @@ Node* Node::parseFromString( std::string s )
         // Check the current char at pos
         if ( isdigit( s[pos] ) ) // Integers indicate cuts
         {
-            curr->setCut();
+            curr->setAsCut();
 
             // Push kids
             for (int i = 0; i < s[pos] - '0'; ++i)
                 stack.push(curr->addChild());
         }
         else // Letters indicate statements
-            curr->setLetter(s[pos]);
+            curr->setAsLetter(s[pos]);
     }
 
     // Bad string
@@ -242,7 +291,7 @@ Node* Node::parseFromString( std::string s )
 
 
     // Make sure the root is actually a root node
-    root->setRoot();
+    root->setAsRoot();
 
     return root;
 }
